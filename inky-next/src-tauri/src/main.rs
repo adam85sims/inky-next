@@ -15,7 +15,7 @@ async fn compile_ink(window: tauri::Window, content: String) -> Result<(), Strin
 
     let (mut rx, _child) = Command::new_sidecar("inklecate")
         .map_err(|e| e.to_string())?
-        .args(["-j", "-c", temp_path.to_str().unwrap()])
+        .args(["-j", "-p", "-c", temp_path.to_str().unwrap()])
         .spawn()
         .map_err(|e| e.to_string())?;
 
