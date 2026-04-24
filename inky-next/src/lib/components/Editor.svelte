@@ -70,6 +70,12 @@
           monaco.editor.setModelMarkers(editor.getModel(), 'ink', []);
           compilerErrors.set([]);
         }
+        if (data.choices) {
+          storyHistory.update(h => [
+            ...h,
+            ...data.choices.map((c, i) => ({ type: 'choice', content: c, index: i + 1 }))
+          ]);
+        }
         if (data.issues) {
           const markers = data.issues.map(issue => ({
             message: issue.message,
