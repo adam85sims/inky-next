@@ -7,9 +7,19 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[tauri::command]
+fn test_sidecar() -> String {
+    let output = tauri::api::process::Command::new_sidecar("inklecate")
+        .expect("failed to setup sidecar")
+        .args(["--help"])
+        .output()
+        .expect("failed to run sidecar");
+    output.stdout
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, test_sidecar])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
