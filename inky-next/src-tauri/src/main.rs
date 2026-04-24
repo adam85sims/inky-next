@@ -2,22 +2,39 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::api::process::Command;
+use tauri::api::process::CommandChild;
 use tauri::api::process::CommandEvent;
+use std::sync::Mutex;
 use uuid::Uuid;
 
+struct AppState {
+    active_process: Mutex<Option<CommandChild>>,
+}
+
 #[tauri::command]
-async fn compile_ink(window: tauri::Window, content: String) -> Result<(), String> {
+async fn compile_ink(
+    window: tauri::Window,
+    state: tauri::State<'_, AppState>,
+    content: String,
+) -> Result<(), String> {
     let session_id = Uuid::new_v4().to_string();
     let temp_dir = std::env::temp_dir().join("inky_next").join(&session_id);
     std::fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
     let temp_path = temp_dir.join("main.ink");
     std::fs::write(&temp_path, content).map_err(|e| e.to_string())?;
 
-    let (mut rx, _child) = Command::new_sidecar("inklecate")
+    let mut lock = state.active_process.lock().unwrap();
+    if let Some(child) = lock.take() {
+        child.kill().ok();
+    }
+
+    let (mut rx, child) = Command::new_sidecar("inklecate")
         .map_err(|e| e.to_string())?
-        .args(["-j", "-p", "-c", temp_path.to_str().unwrap()])
+        .args(["-i", temp_path.to_str().unwrap()])
         .spawn()
         .map_err(|e| e.to_string())?;
+
+    *lock = Some(child);
 
     tauri::async_runtime::spawn(async move {
         while let Some(event) = rx.recv().await {
@@ -27,6 +44,17 @@ async fn compile_ink(window: tauri::Window, content: String) -> Result<(), Strin
         }
     });
 
+    Ok(())
+}
+
+#[tauri::command]
+async fn choose_path(state: tauri::State<'_, AppState>, choice_index: usize) -> Result<(), String> {
+    let mut lock = state.active_process.lock().unwrap();
+    if let Some(child) = lock.as_mut() {
+        child
+            .write(format!("{}\n", choice_index).as_bytes())
+            .map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
@@ -42,7 +70,15 @@ async fn save_file(path: String, content: String) -> Result<(), String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![compile_ink, open_file, save_file])
+        .manage(AppState {
+            active_process: Mutex::new(None),
+        })
+        .invoke_handler(tauri::generate_handler![
+            compile_ink,
+            choose_path,
+            open_file,
+            save_file
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
