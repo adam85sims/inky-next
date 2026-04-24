@@ -1,22 +1,14 @@
 <script>
   import Editor from '$lib/components/Editor.svelte';
+  import Preview from '$lib/components/Preview.svelte';
+  import '../app.css';
 </script>
 
-<main class="editor-container">
-  <Editor />
+<main class="flex h-screen w-screen overflow-hidden">
+  <div class="flex-1 border-r border-slate-800">
+    <Editor />
+  </div>
+  <div class="flex-1">
+    <Preview />
+  </div>
 </main>
-
-<style>
-  :root {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
-  }
-
-  .editor-container {
-    height: 100vh;
-    width: 100vw;
-  }
-</style>
