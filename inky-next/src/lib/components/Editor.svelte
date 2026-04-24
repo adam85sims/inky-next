@@ -23,9 +23,32 @@
   }
 
   onMount(async () => {
+    // Register Ink language if it's not already registered
+    if (!monaco.languages.getLanguages().some(lang => lang.id === 'ink')) {
+      monaco.languages.register({ id: 'ink' });
+      monaco.languages.setMonarchTokensProvider('ink', {
+        tokenizer: {
+          root: [
+            [/VAR\s+/, "keyword"],
+            [/CONST\s+/, "keyword"],
+            [/LIST\s+/, "keyword"],
+            [/KNOT\s+/, "keyword"],
+            [/==+/, "keyword"],
+            [/->/, "keyword"],
+            [/<-/, "keyword"],
+            [/\[/, "bracket"],
+            [/\]/, "bracket"],
+            [/\*| \+/, "keyword"],
+            [/\/\/.*/, "comment"],
+            [/\/\*[\s\S]*?\*\//, "comment"],
+          ]
+        }
+      });
+    }
+
     editor = monaco.editor.create(container, {
       value: $editorContent,
-      language: 'markdown', // We'll refine this to 'ink' later
+      language: 'ink',
       theme: 'vs-dark',
       automaticLayout: true,
     });
