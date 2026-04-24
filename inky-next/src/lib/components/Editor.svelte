@@ -15,6 +15,7 @@
 
   async function handleCompile(content) {
     try {
+      storyHistory.set([]);
       await invoke('compile_ink', { content });
     } catch (err) {
       console.error('Failed to compile ink:', err);
