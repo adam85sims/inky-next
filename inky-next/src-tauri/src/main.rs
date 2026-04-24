@@ -68,7 +68,15 @@ async fn save_file(path: String, content: String) -> Result<(), String> {
     std::fs::write(path, content).map_err(|e| e.to_string())
 }
 
+fn cleanup_temp() {
+    let temp_dir = std::env::temp_dir().join("inky_next");
+    if temp_dir.exists() {
+        std::fs::remove_dir_all(temp_dir).ok();
+    }
+}
+
 fn main() {
+    cleanup_temp();
     tauri::Builder::default()
         .manage(AppState {
             active_process: Mutex::new(None),
