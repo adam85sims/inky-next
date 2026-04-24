@@ -3,15 +3,18 @@
 
 use tauri::api::process::Command;
 use tauri::api::process::CommandEvent;
+use uuid::Uuid;
 
 #[tauri::command]
 async fn compile_ink(window: tauri::Window, content: String) -> Result<(), String> {
-    // Write content to temp file
-    let temp_path = std::env::temp_dir().join("compile.ink");
+    let session_id = Uuid::new_v4().to_string();
+    let temp_dir = std::env::temp_dir().join("inky_next").join(&session_id);
+    std::fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
+    let temp_path = temp_dir.join("main.ink");
     std::fs::write(&temp_path, content).map_err(|e| e.to_string())?;
 
     let (mut rx, _child) = Command::new_sidecar("inklecate")
-        .expect("failed to setup sidecar")
+        .map_err(|e| e.to_string())?
         .args(["-j", "-c", temp_path.to_str().unwrap()])
         .spawn()
         .map_err(|e| e.to_string())?;
