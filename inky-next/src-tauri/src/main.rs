@@ -30,9 +30,19 @@ async fn compile_ink(window: tauri::Window, content: String) -> Result<(), Strin
     Ok(())
 }
 
+#[tauri::command]
+async fn open_file(path: String) -> Result<String, String> {
+    std::fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn save_file(path: String, content: String) -> Result<(), String> {
+    std::fs::write(path, content).map_err(|e| e.to_string())
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![compile_ink])
+        .invoke_handler(tauri::generate_handler![compile_ink, open_file, save_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
