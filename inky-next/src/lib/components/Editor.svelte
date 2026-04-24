@@ -3,7 +3,7 @@
   import * as monaco from 'monaco-editor';
   import { invoke } from '@tauri-apps/api/tauri';
   import { listen } from '@tauri-apps/api/event';
-  import { editorContent, storyHistory } from '$lib/stores';
+  import { editorContent, storyHistory, compilerErrors } from '$lib/stores';
 
   /** @type {HTMLElement} */
   let container;
@@ -42,6 +42,21 @@
         const data = JSON.parse(event.payload);
         if (data.text) {
           storyHistory.update(h => [...h, { type: 'text', content: data.text }]);
+          // Successful compilation, clear errors
+          monaco.editor.setModelMarkers(editor.getModel(), 'ink', []);
+          compilerErrors.set([]);
+        }
+        if (data.issues) {
+          const markers = data.issues.map(issue => ({
+            message: issue.message,
+            severity: monaco.MarkerSeverity.Error,
+            startLineNumber: issue.lineNumber,
+            endLineNumber: issue.lineNumber,
+            startColumn: 1,
+            endColumn: 100
+          }));
+          monaco.editor.setModelMarkers(editor.getModel(), 'ink', markers);
+          compilerErrors.set(data.issues);
         }
       } catch (e) {
         console.error("Failed to parse ink output:", e, event.payload);
