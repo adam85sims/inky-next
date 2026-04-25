@@ -41,7 +41,7 @@
   }
 
   onMount(async () => {
-    window.insertInkSnippet = insertSnippet;
+    (/** @type {any} */ (window)).insertInkSnippet = insertSnippet;
     // Register Ink language if it's not already registered
     if (!monaco.languages.getLanguages().some(lang => lang.id === 'ink')) {
       monaco.languages.register({ id: 'ink' });
