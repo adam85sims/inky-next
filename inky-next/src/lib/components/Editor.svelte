@@ -3,7 +3,7 @@
   import * as monaco from 'monaco-editor';
   import { invoke } from '@tauri-apps/api/tauri';
   import { listen } from '@tauri-apps/api/event';
-  import { editorContent, storyHistory, compilerErrors } from '$lib/stores';
+  import { editorContent, storyHistory, compilerErrors, theme } from '$lib/stores';
 
   /** @type {HTMLElement} */
   let container;
@@ -12,6 +12,8 @@
 
   let debounceTimer;
   let unlisten;
+  let unsubscribeContent;
+  let unsubscribeTheme;
 
   async function handleCompile(content) {
     try {
@@ -49,16 +51,30 @@
     editor = monaco.editor.create(container, {
       value: $editorContent,
       language: 'ink',
-      theme: 'vs-dark',
+      theme: $theme === 'dark' ? 'vs-dark' : 'vs',
       automaticLayout: true,
     });
 
     editor.onDidChangeModelContent(() => {
       const currentValue = editor.getValue();
-      editorContent.set(currentValue);
+      if (currentValue !== $editorContent) {
+        editorContent.set(currentValue);
+      }
 
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => handleCompile(currentValue), 300);
+    });
+
+    unsubscribeContent = editorContent.subscribe(value => {
+      if (editor && editor.getValue() !== value) {
+        editor.setValue(value);
+      }
+    });
+
+    unsubscribeTheme = theme.subscribe(value => {
+      if (editor) {
+        monaco.editor.setTheme(value === 'dark' ? 'vs-dark' : 'vs');
+      }
     });
 
     unlisten = await listen('ink-output', (event) => {
@@ -100,6 +116,12 @@
     }
     if (unlisten) {
       unlisten();
+    }
+    if (unsubscribeContent) {
+      unsubscribeContent();
+    }
+    if (unsubscribeTheme) {
+      unsubscribeTheme();
     }
     if (debounceTimer) {
       clearTimeout(debounceTimer);
