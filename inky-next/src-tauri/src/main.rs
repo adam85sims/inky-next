@@ -4,6 +4,7 @@
 use tauri::api::process::Command;
 use tauri::api::process::CommandChild;
 use tauri::api::process::CommandEvent;
+use std::path::PathBuf;
 use std::sync::Mutex;
 use uuid::Uuid;
 
@@ -68,6 +69,32 @@ async fn save_file(path: String, content: String) -> Result<(), String> {
     std::fs::write(path, content).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn list_project_files(project_path: String) -> Result<Vec<String>, String> {
+    let mut files = Vec::new();
+    let dir = PathBuf::from(&project_path);
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("ink") {
+                if let Some(p) = path.to_str() {
+                    files.push(p.to_string());
+                }
+            }
+        }
+    }
+    Ok(files)
+}
+
+#[tauri::command]
+async fn create_file(path: String) -> Result<(), String> {
+    if std::path::Path::new(&path).exists() {
+        return Err("File already exists".to_string());
+    }
+    std::fs::write(&path, "").map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 fn cleanup_temp() {
     let temp_dir = std::env::temp_dir().join("inky_next");
     if temp_dir.exists() {
@@ -85,7 +112,9 @@ fn main() {
             compile_ink,
             choose_path,
             open_file,
-            save_file
+            save_file,
+            list_project_files,
+            create_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
