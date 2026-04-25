@@ -1,7 +1,7 @@
 <script>
   import { open, save } from '@tauri-apps/api/dialog';
   import { invoke } from '@tauri-apps/api/tauri';
-  import { editorContent } from '$lib/stores';
+  import { editorContent, theme } from '$lib/stores';
 
   async function handleOpen() {
     try {
@@ -29,6 +29,10 @@
       console.error('Failed to save file:', err);
     }
   }
+
+  function toggleTheme() {
+    theme.update(t => t === 'dark' ? 'light' : 'dark');
+  }
 </script>
 
 <div class="flex gap-2 p-2 bg-slate-900 border-b border-slate-800">
@@ -43,5 +47,12 @@
     class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 text-sm transition-colors"
   >
     Save
+  </button>
+  <div class="flex-1"></div>
+  <button 
+    on:click={toggleTheme} 
+    class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 text-sm transition-colors"
+  >
+    Toggle Theme ({$theme})
   </button>
 </div>
