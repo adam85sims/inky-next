@@ -29,7 +29,19 @@
     }
   }
 
+  /** @param {string} template */
+  export function insertSnippet(template) {
+    if (!editor) return;
+    /** @type {any} */
+    const contribution = editor.getContribution('snippetController2');
+    if (contribution) {
+      contribution.insert(template);
+      editor.focus();
+    }
+  }
+
   onMount(async () => {
+    window.insertInkSnippet = insertSnippet;
     // Register Ink language if it's not already registered
     if (!monaco.languages.getLanguages().some(lang => lang.id === 'ink')) {
       monaco.languages.register({ id: 'ink' });
