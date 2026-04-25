@@ -1,7 +1,10 @@
 <script>
   import { open, save } from '@tauri-apps/api/dialog';
   import { invoke } from '@tauri-apps/api/tauri';
-  import { editorContent, theme } from '$lib/stores';
+  import { editorContent, theme, sidebarVisible } from '$lib/stores';
+  import SnippetMenu from './SnippetMenu.svelte';
+
+  let snippetMenuVisible = false;
 
   async function handleOpen() {
     try {
@@ -36,6 +39,25 @@
 </script>
 
 <div class="flex gap-2 p-2 bg-slate-900 border-b border-slate-800">
+  <button 
+    on:click={() => $sidebarVisible = !$sidebarVisible}
+    class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 text-sm transition-colors"
+  >
+    {$sidebarVisible ? 'Hide Sidebar' : 'Show Sidebar'}
+  </button>
+
+  <div class="relative">
+    <button 
+      on:click={() => snippetMenuVisible = !snippetMenuVisible}
+      class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 text-sm transition-colors"
+    >
+      Ink
+    </button>
+    <SnippetMenu bind:active={snippetMenuVisible} />
+  </div>
+
+  <div class="w-px bg-slate-800 mx-1"></div>
+
   <button 
     on:click={handleOpen} 
     class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 text-sm transition-colors"
