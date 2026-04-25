@@ -5,6 +5,7 @@
 
   async function refreshFiles() {
     // For now, assume current dir for demo or pass actual path
+    /** @type {string[]} */
     const files = await invoke('list_project_files', { projectPath: "./" });
     projectFiles.set(files);
 

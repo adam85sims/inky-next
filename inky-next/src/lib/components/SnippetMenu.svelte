@@ -2,9 +2,10 @@
   import { snippets } from '$lib/snippets';
   export let active = false;
 
+  /** @param {string} content */
   function insert(content) {
-    if (window.insertInkSnippet) {
-      window.insertInkSnippet(content);
+    if ((/** @type {any} */ (window)).insertInkSnippet) {
+      (/** @type {any} */ (window)).insertInkSnippet(content);
     }
     active = false;
   }
