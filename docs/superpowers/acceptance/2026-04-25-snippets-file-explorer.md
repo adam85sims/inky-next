@@ -2,7 +2,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-04-25-inky-next-core-features-design.md`
 **Date:** 2026-04-25
-**Status:** Draft
+**Status:** Approved
 
 ---
 

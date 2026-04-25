@@ -3,7 +3,7 @@
   import * as monaco from 'monaco-editor';
   import { invoke } from '@tauri-apps/api/tauri';
   import { listen } from '@tauri-apps/api/event';
-  import { editorContent, storyHistory, compilerErrors, theme } from '$lib/stores';
+  import { editorContent, storyHistory, compilerErrors, theme, activeFilePath } from '$lib/stores';
 
   /** @type {HTMLElement} */
   let container;
@@ -18,6 +18,8 @@
   let unsubscribeContent;
   /** @type {import('svelte/store').Unsubscriber} */
   let unsubscribeTheme;
+  /** @type {import('svelte/store').Unsubscriber} */
+  let unsubscribeActiveFile;
 
   /** @param {string} content */
   async function handleCompile(content) {
@@ -35,8 +37,8 @@
     /** @type {any} */
     const contribution = editor.getContribution('snippetController2');
     if (contribution) {
-      contribution.insert(template);
       editor.focus();
+      contribution.insert(template);
     }
   }
 
@@ -70,6 +72,17 @@
       language: 'ink',
       theme: $theme === 'dark' ? 'vs-dark' : 'vs',
       automaticLayout: true,
+      tabSize: 4,
+      insertSpaces: true,
+      detectIndentation: true,
+      scrollBeyondLastLine: false,
+      wordWrap: 'on',
+      snippetSuggestions: 'top',
+      suggestOnTriggerCharacters: true,
+      folding: true,
+      lineNumbers: 'on',
+      minimap: { enabled: false },
+      unicodeHighlight: { ambiguousCharacters: false }
     });
 
     editor.onDidChangeModelContent(() => {
@@ -91,6 +104,17 @@
     unsubscribeTheme = theme.subscribe(value => {
       if (editor) {
         monaco.editor.setTheme(value === 'dark' ? 'vs-dark' : 'vs');
+      }
+    });
+
+    unsubscribeActiveFile = activeFilePath.subscribe(async (path) => {
+      if (path && editor) {
+        try {
+          const content = await invoke('open_file', { path });
+          editorContent.set(content);
+        } catch (err) {
+          console.error('Failed to load file:', err);
+        }
       }
     });
 
@@ -187,6 +211,9 @@
     }
     if (unsubscribeTheme) {
       unsubscribeTheme();
+    }
+    if (unsubscribeActiveFile) {
+      unsubscribeActiveFile();
     }
     if (debounceTimer) {
       clearTimeout(debounceTimer);

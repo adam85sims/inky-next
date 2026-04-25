@@ -7,6 +7,13 @@
     // For now, assume current dir for demo or pass actual path
     const files = await invoke('list_project_files', { projectPath: "./" });
     projectFiles.set(files);
+
+    // Auto-set main file if none set
+    if (!$mainInkPath && files.length > 0) {
+      // Prefer main.ink if it exists
+      const main = files.find(f => f.endsWith('main.ink')) || files[0];
+      mainInkPath.set(main);
+    }
   }
 
   async function createNewFile() {

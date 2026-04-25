@@ -1,0 +1,31 @@
+{
+  "name": "inky",
+  "description": "Standalone editor for the ink dialogue language",
+  "architecture": "Electron (Legacy) / Tauri + SvelteKit + Monaco (Inky Next)",
+  "worktrees": [
+    {
+      "path": ".worktrees/tauri-migration",
+      "branch": "feature/tauri-migration",
+      "purpose": "Migration to Tauri"
+    }
+  ],
+  "specs": [
+    "docs/superpowers/specs/2026-04-24-inky-tauri-migration-design.md"
+  ],
+  "plans": [
+    "docs/superpowers/plans/2026-04-24-inky-tauri-migration.md",
+    "docs/superpowers/plans/2026-04-24-inky-tauri-migration-fixes.md",
+    "docs/superpowers/plans/2026-04-24-inky-tauri-migration-polish.md",
+    "docs/superpowers/plans/2026-04-24-inky-tauri-migration-final-fixes.md"
+  ],
+  "acceptance_criteria": [
+    "docs/superpowers/acceptance/2026-04-24-inky-tauri-migration.md"
+  ],
+  "key_files": {
+    "backend": "inky-next/src-tauri/src/main.rs",
+    "frontend_stores": "inky-next/src/lib/stores.js",
+    "editor_component": "inky-next/src/lib/components/Editor.svelte",
+    "preview_component": "inky-next/src/lib/components/Preview.svelte",
+    "toolbar_component": "inky-next/src/lib/components/Toolbar.svelte"
+  }
+}

@@ -37,7 +37,15 @@ Building Inky Next requires several system libraries. On Ubuntu/Debian:
 ```bash
 sudo apt-get install libsoup2.4-dev libjavascriptcoregtk-4.0-dev libwebkit2gtk-4.0-dev libsqlite3-dev
 ```
-*Note: If your distribution provides newer versions (e.g., 4.1), you may need to link them if the Tauri crates specifically require 4.0.*
+*Note: If your distribution provides newer versions (e.g., Ubuntu 24.04+ with `4.1`), you may need to link them since Tauri v1 crates specifically require 4.0. You can run:*
+```bash
+sudo apt-get install libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+sudo ln -s /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.0.pc
+sudo ln -s /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc
+sudo ln -s /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-web-extension-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-web-extension-4.0.pc
+sudo ln -s /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.1.so /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.0.so
+sudo ln -s /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.0.so
+```
 
 #### Setup
 1. `cd inky-next`
