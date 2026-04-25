@@ -32,6 +32,14 @@ We are currently migrating Inky to a modern stack: **Tauri + SvelteKit + Monaco 
 - [Rust](https://www.rust-lang.org/tools/install) (for Inky Next)
 
 ### Building Inky Next (Tauri version)
+#### System Dependencies (Linux)
+Building Inky Next requires several system libraries. On Ubuntu/Debian:
+```bash
+sudo apt-get install libsoup2.4-dev libjavascriptcoregtk-4.0-dev libwebkit2gtk-4.0-dev libsqlite3-dev
+```
+*Note: If your distribution provides newer versions (e.g., 4.1), you may need to link them if the Tauri crates specifically require 4.0.*
+
+#### Setup
 1. `cd inky-next`
 2. `npm install`
 3. `npm run tauri dev` to run in development mode.
