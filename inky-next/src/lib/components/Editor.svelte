@@ -83,40 +83,82 @@
     });
 
     unlisten = await listen('ink-output', (event) => {
-      try {
-        const data = JSON.parse(event.payload);
-        if (data.text) {
-          storyHistory.update(h => [...h, { type: 'text', content: data.text }]);
-          // Successful compilation, clear errors
-          const model = editor.getModel();
-          if (model) {
-            monaco.editor.setModelMarkers(model, 'ink', []);
+      const payload = event.payload;
+      
+      // Robustly split and parse multiple concatenated JSON objects
+      const jsonStrings = [];
+      let depth = 0;
+      let start = 0;
+      let inString = false;
+      let escaped = false;
+
+      for (let i = 0; i < payload.length; i++) {
+        const char = payload[i];
+        
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+
+        if (char === '\\') {
+          escaped = true;
+          continue;
+        }
+
+        if (char === '"') {
+          inString = !inString;
+          continue;
+        }
+
+        if (!inString) {
+          if (char === '{') {
+            if (depth === 0) start = i;
+            depth++;
+          } else if (char === '}') {
+            depth--;
+            if (depth === 0) {
+              jsonStrings.push(payload.substring(start, i + 1));
+            }
           }
-          compilerErrors.set([]);
         }
-        if (data.choices) {
-          storyHistory.update(h => [
-            ...h,
-            ...data.choices.map((/** @type {any} */ c, /** @type {number} */ i) => ({ type: 'choice', content: c, index: i + 1 }))
-          ]);
-        }
-        if (data.issues) {
-          const markers = data.issues.map((/** @type {any} */ issue) => ({
-            message: issue.message,
-            severity: monaco.MarkerSeverity.Error,
-            startLineNumber: issue.lineNumber,
-            endLineNumber: issue.lineNumber,
-            startColumn: 1,
-            endColumn: 100
-          }));
-          const model = editor.getModel();
-          if (model) {
-            monaco.editor.setModelMarkers(model, 'ink', markers);
+      }
+
+      for (const jsonStr of jsonStrings) {
+        try {
+          const data = JSON.parse(jsonStr);
+          if (data.text) {
+            storyHistory.update(h => [...h, { type: 'text', content: data.text }]);
+            // Successful compilation, clear errors
+            const model = editor.getModel();
+            if (model) {
+              monaco.editor.setModelMarkers(model, 'ink', []);
+            }
+            compilerErrors.set([]);
           }
-          compilerErrors.set(data.issues);
+          if (data.choices) {
+            storyHistory.update(h => [
+              ...h,
+              ...data.choices.map((/** @type {any} */ c, /** @type {number} */ i) => ({ type: 'choice', content: c.text || c, index: i + 1 }))
+            ]);
+          }
+          if (data.issues) {
+            const markers = data.issues.map((/** @type {any} */ issue) => ({
+              message: issue.message,
+              severity: monaco.MarkerSeverity.Error,
+              startLineNumber: issue.lineNumber,
+              endLineNumber: issue.lineNumber,
+              startColumn: 1,
+              endColumn: 100
+            }));
+            const model = editor.getModel();
+            if (model) {
+              monaco.editor.setModelMarkers(model, 'ink', markers);
+            }
+            compilerErrors.set(data.issues);
+          }
+        } catch (e) {
+          console.error("Failed to parse ink output chunk:", e, jsonStr);
         }
-      } catch (e) {
-        console.error("Failed to parse ink output:", e, event.payload);
       }
     });
   });

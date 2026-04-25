@@ -30,7 +30,7 @@ async fn compile_ink(
 
     let (mut rx, child) = Command::new_sidecar("inklecate")
         .map_err(|e| e.to_string())?
-        .args(["-i", "-j", temp_path.to_str().unwrap()])
+        .args(["-p", "-j", "-k", "-c", temp_path.to_str().unwrap()])
         .spawn()
         .map_err(|e| e.to_string())?;
 
