@@ -3,7 +3,8 @@
   import * as monaco from 'monaco-editor';
   import { invoke } from '@tauri-apps/api/tauri';
   import { listen } from '@tauri-apps/api/event';
-  import { editorContent, storyHistory, compilerErrors, theme, activeFilePath } from '$lib/stores';
+  import { get } from 'svelte/store';
+  import { editorContent, storyHistory, compilerErrors, theme, activeFilePath, mainInkPath } from '$lib/stores';
 
   /** @type {HTMLElement} */
   let container;
@@ -23,9 +24,22 @@
 
   /** @param {string} content */
   async function handleCompile(content) {
+    const activePath = get(activeFilePath);
+    const mainPath = get(mainInkPath);
+    
+    if (activePath) {
+      try {
+        await invoke('save_file', { path: activePath, content });
+      } catch (err) {
+        console.error('Failed to save file before compilation:', err);
+      }
+    }
+
+    if (!mainPath) return;
+
     try {
       storyHistory.set([]);
-      await invoke('compile_ink', { content });
+      await invoke('compile_ink', { mainPath });
     } catch (err) {
       console.error('Failed to compile ink:', err);
     }

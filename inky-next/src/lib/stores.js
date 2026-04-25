@@ -11,6 +11,8 @@ export const compilerErrors = writable([]);
 /** @type {import('svelte/store').Writable<string[]>} */
 export const projectFiles = writable([]);
 /** @type {import('svelte/store').Writable<string|null>} */
+export const projectRoot = writable(null);
+/** @type {import('svelte/store').Writable<string|null>} */
 export const activeFilePath = writable(null);
 /** @type {import('svelte/store').Writable<string|null>} */
 export const mainInkPath = writable(null);

@@ -1,5 +1,5 @@
 <script>
-  import { projectFiles, activeFilePath, sidebarVisible, mainInkPath, editorContent } from '$lib/stores';
+  import { projectFiles, activeFilePath, sidebarVisible, mainInkPath, editorContent, projectRoot } from '$lib/stores';
   import { invoke } from '@tauri-apps/api/tauri';
   import { onMount } from 'svelte';
 
@@ -7,9 +7,24 @@
   let newFileName = $state("");
 
   async function refreshFiles() {
-    // For now, assume current dir for demo or pass actual path
+    if (!$projectRoot) {
+      const tempDir = await invoke('get_temp_project_dir');
+      projectRoot.set(tempDir);
+      
+      // Create initial main.ink
+      const mainPath = `${tempDir}/main.ink`;
+      try {
+        await invoke('create_file', { path: mainPath });
+        await invoke('save_file', { path: mainPath, content: "Once upon a time..." });
+        mainInkPath.set(mainPath);
+        activeFilePath.set(mainPath);
+      } catch (err) {
+        console.error("Failed to create initial file:", err);
+      }
+    }
+
     /** @type {string[]} */
-    const files = await invoke('list_project_files', { projectPath: "./" });
+    const files = await invoke('list_project_files', { projectPath: $projectRoot });
     projectFiles.set(files);
 
     // Auto-set main file if none set
@@ -25,21 +40,34 @@
       isCreating = false;
       return;
     }
-    const name = newFileName;
-    const path = `./${name}`;
+    const name = newFileName.endsWith('.ink') ? newFileName : `${newFileName}.ink`;
+    const path = `${$projectRoot}/${name}`;
     try {
       await invoke('create_file', { path });
       await refreshFiles();
       
+      // Auto-set as active if it's the only file or if we want to switch
+      activeFilePath.set(path);
+
       // Auto-include in main file
-      if ($mainInkPath) {
+      if ($mainInkPath && path !== $mainInkPath) {
         const includeLine = `INCLUDE ${name}\n`;
         // In a real app, we'd read/write the main file via Tauri
         // For now, if active is main, update editorContent
         if ($activeFilePath === $mainInkPath) {
           editorContent.update(c => includeLine + c);
+        } else {
+          // If not active, we should still append to the main file on disk
+          const currentMainContent = await invoke('open_file', { path: $mainInkPath });
+          await invoke('save_file', { 
+            path: $mainInkPath, 
+            content: includeLine + currentMainContent 
+          });
         }
+      } else if (!$mainInkPath) {
+        mainInkPath.set(path);
       }
+
       isCreating = false;
       newFileName = "";
     } catch (err) {
