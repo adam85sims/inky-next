@@ -10,11 +10,16 @@
   /** @type {import('monaco-editor').editor.IStandaloneCodeEditor} */
   let editor;
 
+  /** @type {any} */
   let debounceTimer;
+  /** @type {any} */
   let unlisten;
+  /** @type {import('svelte/store').Unsubscriber} */
   let unsubscribeContent;
+  /** @type {import('svelte/store').Unsubscriber} */
   let unsubscribeTheme;
 
+  /** @param {string} content */
   async function handleCompile(content) {
     try {
       storyHistory.set([]);
@@ -83,17 +88,20 @@
         if (data.text) {
           storyHistory.update(h => [...h, { type: 'text', content: data.text }]);
           // Successful compilation, clear errors
-          monaco.editor.setModelMarkers(editor.getModel(), 'ink', []);
+          const model = editor.getModel();
+          if (model) {
+            monaco.editor.setModelMarkers(model, 'ink', []);
+          }
           compilerErrors.set([]);
         }
         if (data.choices) {
           storyHistory.update(h => [
             ...h,
-            ...data.choices.map((c, i) => ({ type: 'choice', content: c, index: i + 1 }))
+            ...data.choices.map((/** @type {any} */ c, /** @type {number} */ i) => ({ type: 'choice', content: c, index: i + 1 }))
           ]);
         }
         if (data.issues) {
-          const markers = data.issues.map(issue => ({
+          const markers = data.issues.map((/** @type {any} */ issue) => ({
             message: issue.message,
             severity: monaco.MarkerSeverity.Error,
             startLineNumber: issue.lineNumber,
@@ -101,7 +109,10 @@
             startColumn: 1,
             endColumn: 100
           }));
-          monaco.editor.setModelMarkers(editor.getModel(), 'ink', markers);
+          const model = editor.getModel();
+          if (model) {
+            monaco.editor.setModelMarkers(model, 'ink', markers);
+          }
           compilerErrors.set(data.issues);
         }
       } catch (e) {

@@ -3,6 +3,7 @@
   import { afterUpdate } from 'svelte';
   import { invoke } from '@tauri-apps/api/tauri';
 
+  /** @type {HTMLElement} */
   let scrollContainer;
 
   afterUpdate(() => {
@@ -11,6 +12,7 @@
     }
   });
 
+  /** @param {number} index */
   async function makeChoice(index) {
     try {
       await invoke('choose_path', { choiceIndex: index });
