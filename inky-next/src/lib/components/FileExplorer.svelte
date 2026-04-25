@@ -3,6 +3,9 @@
   import { invoke } from '@tauri-apps/api/tauri';
   import { onMount } from 'svelte';
 
+  let isCreating = $state(false);
+  let newFileName = $state("");
+
   async function refreshFiles() {
     // For now, assume current dir for demo or pass actual path
     /** @type {string[]} */
@@ -18,8 +21,11 @@
   }
 
   async function createNewFile() {
-    const name = prompt("Enter file name (e.g. story.ink):");
-    if (!name) return;
+    if (!newFileName) {
+      isCreating = false;
+      return;
+    }
+    const name = newFileName;
     const path = `./${name}`;
     try {
       await invoke('create_file', { path });
@@ -34,9 +40,30 @@
           editorContent.update(c => includeLine + c);
         }
       }
+      isCreating = false;
+      newFileName = "";
     } catch (err) {
       alert(err);
     }
+  }
+
+  function cancelCreation() {
+    isCreating = false;
+    newFileName = "";
+  }
+
+  /** @param {KeyboardEvent} event */
+  function handleKeyDown(event) {
+    if (event.key === "Enter") {
+      createNewFile();
+    } else if (event.key === "Escape") {
+      cancelCreation();
+    }
+  }
+
+  /** @param {HTMLElement} node */
+  function autofocus(node) {
+    node.focus();
   }
 
   onMount(refreshFiles);
@@ -46,14 +73,27 @@
   <div class="flex justify-between items-center mb-4 px-2">
     <span class="text-xs font-bold uppercase tracking-wider">Files</span>
     <div class="flex gap-2">
-      <button on:click={createNewFile} class="hover:text-white" title="New File">+</button>
-      <button on:click={refreshFiles} class="hover:text-white" title="Refresh">↻</button>
+      <button onclick={() => isCreating = true} class="hover:text-white" title="New File">+</button>
+      <button onclick={refreshFiles} class="hover:text-white" title="Refresh">↻</button>
     </div>
   </div>
   <div class="flex-1 overflow-y-auto">
+    {#if isCreating}
+      <div class="px-2 mb-2">
+        <input
+          type="text"
+          bind:value={newFileName}
+          onkeydown={handleKeyDown}
+          onblur={cancelCreation}
+          use:autofocus
+          placeholder="filename.ink"
+          class="w-full bg-slate-900 border border-slate-700 text-white text-sm px-2 py-1 rounded outline-none focus:border-blue-500"
+        />
+      </div>
+    {/if}
     {#each $projectFiles as file}
       <button 
-        on:click={() => activeFilePath.set(file)}
+        onclick={() => activeFilePath.set(file)}
         class="block w-full text-left px-2 py-1 text-sm hover:bg-slate-700 rounded {$activeFilePath === file ? 'bg-slate-700 text-white' : ''}"
       >
         {file.split('/').pop()}
