@@ -5,6 +5,11 @@
 
   let isCreating = $state(false);
   let newFileName = $state("");
+  
+  // Context menu state
+  let menuVisible = $state(false);
+  let menuPos = $state({ x: 0, y: 0 });
+  let menuFile = $state("");
 
   async function refreshFiles() {
     if (!$projectRoot) {
@@ -94,10 +99,52 @@
     node.focus();
   }
 
-  onMount(refreshFiles);
+  /**
+   * @param {MouseEvent} e
+   * @param {string} file
+   */
+  function handleContextMenu(e, file) {
+    e.preventDefault();
+    menuPos = { x: e.clientX, y: e.clientY };
+    menuFile = file;
+    menuVisible = true;
+  }
+
+  async function deleteFile() {
+    if (!menuFile) return;
+    const fileName = menuFile.split('/').pop();
+    if (!confirm(`Are you sure you want to delete ${fileName}?`)) {
+      menuVisible = false;
+      return;
+    }
+
+    try {
+      await invoke('delete_file', { path: menuFile });
+      
+      if ($activeFilePath === menuFile) {
+        activeFilePath.set(null);
+      }
+      if ($mainInkPath === menuFile) {
+        mainInkPath.set(null);
+      }
+      
+      await refreshFiles();
+    } catch (err) {
+      alert(err);
+    } finally {
+      menuVisible = false;
+    }
+  }
+
+  onMount(() => {
+    refreshFiles();
+    const closeMenu = () => menuVisible = false;
+    window.addEventListener('click', closeMenu);
+    return () => window.removeEventListener('click', closeMenu);
+  });
 </script>
 
-<div class="h-full bg-slate-800 text-slate-300 p-2 flex flex-col border-r border-slate-700">
+<div class="h-full bg-slate-800 text-slate-300 p-2 flex flex-col border-r border-slate-700 relative">
   <div class="flex justify-between items-center mb-4 px-2">
     <span class="text-xs font-bold uppercase tracking-wider">Files</span>
     <div class="flex gap-2">
@@ -122,10 +169,29 @@
     {#each $projectFiles as file}
       <button 
         onclick={() => activeFilePath.set(file)}
+        oncontextmenu={(e) => handleContextMenu(e, file)}
         class="block w-full text-left px-2 py-1 text-sm hover:bg-slate-700 rounded {$activeFilePath === file ? 'bg-slate-700 text-white' : ''}"
       >
         {file.split('/').pop()}
       </button>
     {/each}
   </div>
+
+  {#if menuVisible}
+    <div 
+      class="fixed z-50 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 w-32"
+      style="top: {menuPos.y}px; left: {menuPos.x}px"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.key === 'Escape' && (menuVisible = false)}
+      role="menu"
+      tabindex="-1"
+    >
+      <button 
+        onclick={deleteFile}
+        class="w-full text-left px-4 py-1.5 text-sm hover:bg-red-900/50 hover:text-red-200 text-slate-200"
+      >
+        Delete
+      </button>
+    </div>
+  {/if}
 </div>

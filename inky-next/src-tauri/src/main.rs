@@ -103,6 +103,16 @@ async fn create_file(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn delete_file(path: String) -> Result<(), String> {
+    let p = std::path::Path::new(&path);
+    if !p.exists() {
+        return Err("File does not exist".to_string());
+    }
+    std::fs::remove_file(p).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
 async fn save_project(source_path: String, target_path: String) -> Result<(), String> {
     let source = PathBuf::from(&source_path);
     let target = PathBuf::from(&target_path);
@@ -148,6 +158,7 @@ fn main() {
             save_file,
             list_project_files,
             create_file,
+            delete_file,
             save_project
         ])
         .run(tauri::generate_context!())

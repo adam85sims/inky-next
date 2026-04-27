@@ -129,6 +129,8 @@
         } catch (err) {
           console.error('Failed to load file:', err);
         }
+      } else if (!path && editor) {
+        editorContent.set("");
       }
     });
 
